@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.artifact }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: meta_ota-linux-x64
+            exe_name: meta_ota
+          - os: windows-latest
+            artifact: meta_ota-windows-x64.exe
+            exe_name: meta_ota.exe
+          - os: macos-latest
+            artifact: meta_ota-macos-arm64
+            exe_name: meta_ota
+          - os: macos-13
+            artifact: meta_ota-macos-x64
+            exe_name: meta_ota
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Resolve dependencies
+        run: dart pub get
+
+      - name: Compile executable
+        shell: bash
+        run: |
+          mkdir -p dist
+          dart compile exe bin/meta_ota.dart -o "dist/${{ matrix.exe_name }}"
+          # Normalize artifact filename for release assets
+          if [[ "${{ matrix.exe_name }}" != "${{ matrix.artifact }}" ]]; then
+            mv "dist/${{ matrix.exe_name }}" "dist/${{ matrix.artifact }}"
+          fi
+          ls -la dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Flatten assets
+        shell: bash
+        run: |
+          mkdir -p dist
+          find release-assets -type f -exec cp {} dist/ \;
+          ls -la dist/
+          chmod +x dist/meta_ota-linux-x64 dist/meta_ota-macos-arm64 dist/meta_ota-macos-x64 || true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/meta_ota-linux-x64
+            dist/meta_ota-windows-x64.exe
+            dist/meta_ota-macos-arm64
+            dist/meta_ota-macos-x64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
