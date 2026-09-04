@@ -4,7 +4,37 @@
 
 ## 安装
 
-从 [Releases](https://github.com/josercc/meta_ota_cli/releases/latest) 下载对应平台产物，再按下方步骤安装。
+### 一键安装（推荐）
+
+脚本会自动识别平台、下载 [最新 Release](https://github.com/josercc/meta_ota_cli/releases/latest) 产物并装好。
+
+**macOS / Linux：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/josercc/meta_ota_cli/main/install.sh | bash
+```
+
+默认装到 `/usr/local/bin/meta_ota`（可能需要输入 sudo 密码）。装到用户目录、无需 sudo：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/josercc/meta_ota_cli/main/install.sh | PREFIX=$HOME/.local bash
+```
+
+固定版本：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/josercc/meta_ota_cli/main/install.sh | META_OTA_VERSION=v0.1.0 bash
+```
+
+**Windows（PowerShell）：**
+
+```powershell
+irm https://raw.githubusercontent.com/josercc/meta_ota_cli/main/install.ps1 | iex
+```
+
+装到 `%LOCALAPPDATA%\meta_ota` 并写入用户 PATH；新开终端后执行 `meta_ota --help`。
+
+### 手动安装
 
 | 平台 | 产物文件名 |
 |------|------------|
@@ -15,20 +45,16 @@
 
 不确定 Mac 架构时执行 `uname -m`：`arm64` 选 Apple Silicon，`x86_64` 选 Intel。
 
-### macOS
+**macOS：**
 
 ```bash
-# 将下载的文件放到当前目录后（按架构二选一）
 chmod +x meta_ota-macos-arm64   # 或 meta_ota-macos-x64
 sudo mv meta_ota-macos-arm64 /usr/local/bin/meta_ota
-
-# 首次运行若提示「无法打开 / 已损坏」，去掉隔离属性：
-xattr -d com.apple.quarantine /usr/local/bin/meta_ota
-
+xattr -d com.apple.quarantine /usr/local/bin/meta_ota   # 若提示无法打开
 meta_ota --help
 ```
 
-### Linux
+**Linux：**
 
 ```bash
 chmod +x meta_ota-linux-x64
@@ -36,37 +62,7 @@ sudo mv meta_ota-linux-x64 /usr/local/bin/meta_ota
 meta_ota --help
 ```
 
-也可装到用户目录（无需 sudo）：
-
-```bash
-mkdir -p "$HOME/.local/bin"
-mv meta_ota-linux-x64 "$HOME/.local/bin/meta_ota"
-chmod +x "$HOME/.local/bin/meta_ota"
-# 确保 ~/.local/bin 已在 PATH 中
-```
-
-### Windows
-
-1. 打开 [Releases](https://github.com/josercc/meta_ota_cli/releases/latest)，下载 `meta_ota-windows-x64.exe`
-2. 重命名为 `meta_ota.exe`，放到任意目录，例如 `C:\Tools\meta_ota\`
-3. 将该目录加入系统 **PATH**（设置 → 系统 → 关于 → 高级系统设置 → 环境变量）
-4. 新开终端验证：
-
-```powershell
-meta_ota --help
-```
-
-PowerShell 一键示例（管理员可选）：
-
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\meta_ota" | Out-Null
-Move-Item -Force .\meta_ota-windows-x64.exe "$env:LOCALAPPDATA\meta_ota\meta_ota.exe"
-# 当前用户 PATH 追加（新开终端后生效）
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$env:LOCALAPPDATA\meta_ota*") {
-  [Environment]::SetEnvironmentVariable("Path", "$userPath;$env:LOCALAPPDATA\meta_ota", "User")
-}
-```
+**Windows：** 下载 `meta_ota-windows-x64.exe`，重命名为 `meta_ota.exe` 并加入 PATH，或直接用上方一键脚本。
 
 ### 前置依赖
 
