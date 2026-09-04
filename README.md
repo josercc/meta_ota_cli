@@ -41,14 +41,13 @@ irm https://raw.githubusercontent.com/josercc/meta_ota_cli/main/install.ps1 | ie
 | Linux x64 | `meta_ota-linux-x64` |
 | Windows x64 | `meta_ota-windows-x64.exe` |
 | macOS Apple Silicon (M 系列) | `meta_ota-macos-arm64` |
-| macOS Intel | `meta_ota-macos-x64` |
 
-不确定 Mac 架构时执行 `uname -m`：`arm64` 选 Apple Silicon，`x86_64` 选 Intel。
+> macOS Intel 暂无预编译包，请从源码编译：`dart compile exe bin/meta_ota.dart -o meta_ota`。
 
-**macOS：**
+**macOS（Apple Silicon）：**
 
 ```bash
-chmod +x meta_ota-macos-arm64   # 或 meta_ota-macos-x64
+chmod +x meta_ota-macos-arm64
 sudo mv meta_ota-macos-arm64 /usr/local/bin/meta_ota
 xattr -d com.apple.quarantine /usr/local/bin/meta_ota   # 若提示无法打开
 meta_ota --help

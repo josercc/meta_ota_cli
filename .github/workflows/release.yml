@@ -25,9 +25,6 @@ jobs:
           - os: macos-latest
             artifact: meta_ota-macos-arm64
             exe_name: meta_ota
-          - os: macos-13
-            artifact: meta_ota-macos-x64
-            exe_name: meta_ota
 
     steps:
       - name: Checkout
@@ -46,7 +43,6 @@ jobs:
         run: |
           mkdir -p dist
           dart compile exe bin/meta_ota.dart -o "dist/${{ matrix.exe_name }}"
-          # Normalize artifact filename for release assets
           if [[ "${{ matrix.exe_name }}" != "${{ matrix.artifact }}" ]]; then
             mv "dist/${{ matrix.exe_name }}" "dist/${{ matrix.artifact }}"
           fi
@@ -75,7 +71,7 @@ jobs:
           mkdir -p dist
           find release-assets -type f -exec cp {} dist/ \;
           ls -la dist/
-          chmod +x dist/meta_ota-linux-x64 dist/meta_ota-macos-arm64 dist/meta_ota-macos-x64 || true
+          chmod +x dist/meta_ota-linux-x64 dist/meta_ota-macos-arm64 || true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -83,10 +79,10 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
             dist/meta_ota-linux-x64
             dist/meta_ota-windows-x64.exe
             dist/meta_ota-macos-arm64
-            dist/meta_ota-macos-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -29,7 +29,11 @@ case "$os" in
   darwin)
     case "$arch" in
       arm64|aarch64) asset="meta_ota-macos-arm64" ;;
-      x86_64) asset="meta_ota-macos-x64" ;;
+      x86_64)
+        echo "error: macOS Intel (x86_64) binary is not published yet." >&2
+        echo "       Build from source: dart compile exe bin/meta_ota.dart -o meta_ota" >&2
+        exit 1
+        ;;
       *) echo "error: unsupported macOS arch: $arch" >&2; exit 1 ;;
     esac
     ;;
