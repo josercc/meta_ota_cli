@@ -55,9 +55,50 @@ jobs:
           path: dist/${{ matrix.artifact }}
           if-no-files-found: error
 
+  # Intel Mac binary: build x86_64 Dart under Rosetta on Apple Silicon runners
+  # (avoids scarce macos-13 Intel runners).
+  build-macos-x64:
+    name: Build (meta_ota-macos-x64)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rosetta
+        run: softwareupdate --install-rosetta --agree-to-license || true
+
+      - name: Setup Dart x64 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            "https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-macos-x64-release.zip" \
+            -o /tmp/dartsdk-macos-x64.zip
+          unzip -q /tmp/dartsdk-macos-x64.zip -d "$HOME"
+          echo "$HOME/dart-sdk/bin" >> "$GITHUB_PATH"
+          arch -x86_64 "$HOME/dart-sdk/bin/dart" --version
+
+      - name: Resolve dependencies
+        run: arch -x86_64 dart pub get
+
+      - name: Compile executable (x86_64)
+        shell: bash
+        run: |
+          mkdir -p dist
+          arch -x86_64 dart compile exe bin/meta_ota.dart -o dist/meta_ota-macos-x64
+          file dist/meta_ota-macos-x64
+          ls -la dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meta_ota-macos-x64
+          path: dist/meta_ota-macos-x64
+          if-no-files-found: error
+
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, build-macos-x64]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -71,7 +112,7 @@ jobs:
           mkdir -p dist
           find release-assets -type f -exec cp {} dist/ \;
           ls -la dist/
-          chmod +x dist/meta_ota-linux-x64 dist/meta_ota-macos-arm64 || true
+          chmod +x dist/meta_ota-linux-x64 dist/meta_ota-macos-arm64 dist/meta_ota-macos-x64 || true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -84,5 +125,6 @@ jobs:
             dist/meta_ota-linux-x64
             dist/meta_ota-windows-x64.exe
             dist/meta_ota-macos-arm64
+            dist/meta_ota-macos-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
